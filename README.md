@@ -21,6 +21,6 @@ run preprocessing.py [dataset log path]
 run classification.py [data processed file path]
 run classification-with-confidence.py [data processed file path]
 ```
-The output of preprocessing will be saved in the cloned directory as 'dataset_processed.csv'
-The classification outputs is separated in folders for each output (anomaly, affected component, scenario, etc.). Each folder contains a csv for each algorithm having its confusion matrix and a 'CrossValidation.csv' file with the combined results.
+- The output of preprocessing will be saved in the cloned directory as 'dataset_processed.csv'
+- The classification outputs is separated in folders for each output (anomaly, affected component, scenario, etc.). Each folder contains a csv for each algorithm having its confusion matrix and a 'CrossValidation.csv' file with the combined results.
 ```
