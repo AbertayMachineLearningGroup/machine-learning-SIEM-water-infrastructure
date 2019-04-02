@@ -5,6 +5,23 @@ This work aims at using different machine learning techniques in detecting anoma
 ## Dataset Used
 The dataset used is published [here](https://www.sciencedirect.com/science/article/pii/S2352340917303402) 
 
+## Citation
+If you want to cite the paper please use the following format;
+
+````
+@InProceedings{10.1007/978-3-030-12786-2_1,
+author="Hindy, Hanan and Brosset, David and Bayne, Ethan and Seeam, Amar and Bellekens, Xavier",
+editor="Katsikas, Sokratis K. and Cuppens, Fr{\'e}d{\'e}ric and Cuppens, Nora and Lambrinoudakis, Costas and Ant{\'o}n, Annie and Gritzalis, Stefanos and Mylopoulos, John and Kalloniatis, Christos",
+title="Improving SIEM for Critical SCADA Water Infrastructures Using Machine Learning",
+booktitle="Computer Security",
+year="2019",
+publisher="Springer International Publishing",
+address="Cham",
+pages="3--19"
+}
+
+````
+
 ## Algorithms Used 
 - Logistic Regression
 - Gaussian Naive Bayes
