@@ -11,6 +11,7 @@ from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split, StratifiedKFold
 
 class ResultData:
     def __init__(self, related_classes, count_of_classes_per_instance, hist_of_instances, acc, acc_no_conf, acc_conf):
@@ -83,7 +84,6 @@ def write_data_to_file(data, fileName):
     
 
 def main(data_file_path):
-    test_size = 0.2
     random_state = 0
     
     dataset = pd.read_csv(data_file_path)
@@ -91,83 +91,92 @@ def main(data_file_path):
     X = dataset.iloc[:, 0: 10].values
     y = dataset.iloc[:, 10: 16].values
     
-    from sklearn.model_selection import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = test_size, random_state = random_state)
+    #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = test_size, random_state = random_state)
     
-    # Normalization
-    from sklearn.preprocessing import StandardScaler
-    sc_X = StandardScaler()
-    X_train = sc_X.fit_transform(X_train)
-    X_test = sc_X.transform(X_test)
-
-    index_of_y_to_classify = 2
-    folder_name = '3-scenario/'
+    kfold = StratifiedKFold(n_splits = 5, shuffle = True, random_state = 0)
         
-    # Begin Classification
-    y_current_train = y_train[:, index_of_y_to_classify]
-    y_current_test =  y_test[:, index_of_y_to_classify]
+    counter = 0
+    for train, test in kfold.split(X, y[:, 2]):
+        X_train = X[train]
+        y_train = y[train, 2]
+        X_test = X[test]
+        y_test = y[test, 2]
+        
+        
+        # Normalization
+        from sklearn.preprocessing import StandardScaler
+        sc_X = StandardScaler()
+        X_train = sc_X.fit_transform(X_train)
+        X_test = sc_X.transform(X_test)
     
-    # 1- linear regression
-    linear_classifier = LogisticRegression(random_state = random_state)
-    linear_classifier.fit(X_train, y_current_train)
-    accuracies_linear = calculate_accuracy(linear_classifier, X_test, y_current_test)
-    
-    # 2- KNN
-    knn_classifier = KNeighborsClassifier()
-    knn_classifier.fit(X_train, y_current_train)
-    accuracies_KNN = calculate_accuracy(knn_classifier, X_test, y_current_test)
-    
-    # 3- SVM
-    svm_classifier = SVC(kernel = 'linear', random_state = random_state, probability=True)
-    svm_classifier.fit(X_train, y_current_train)
-    accuracies_svm = calculate_accuracy(svm_classifier, X_test, y_current_test)
-    
-    #4- Kernel SVM
-    kernel_svm_classifier = SVC(kernel = 'rbf', random_state = random_state, probability=True)
-    kernel_svm_classifier.fit(X_train, y_current_train)
-    accuracies_kernel_svm = calculate_accuracy(kernel_svm_classifier, X_test, y_current_test)
-    
-    #5- Naive Bayes
-    naive_classifier = GaussianNB()
-    naive_classifier.fit(X_train, y_current_train)
-    accuracies_naive = calculate_accuracy(naive_classifier, X_test, y_current_test)
-    
-    #6- Decision Tree
-    decision_tree_classifier = DecisionTreeClassifier(criterion = 'entropy', random_state = random_state)
-    decision_tree_classifier.fit(X_train, y_current_train)
-    accuracies_decision_tree = calculate_accuracy(decision_tree_classifier, X_test, y_current_test)
-    
-    #7- Random Forest
-    random_forest_classifier = RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = random_state)
-    random_forest_classifier.fit(X_train, y_current_train)
-    accuracies_random_forest = calculate_accuracy(random_forest_classifier, X_test, y_current_test)
-    
-    if os.path.isdir(folder_name) == False:
-        os.mkdir(folder_name)
-    
-    with open(folder_name + 'CrossValidation.csv', 'a') as cv_file:
-        cv_file.write('Algorithm, One Scenario, No Confidence, Confidence')
-        cv_file.write('\nLinear   , ' + str(accuracies_linear._acc) + "," + str(accuracies_linear._acc_no_conf) + "," +str(accuracies_linear._acc_conf))
-        cv_file.write('\nNaive   , ' + str(accuracies_naive._acc) + "," + str(accuracies_naive._acc_no_conf) + "," +str(accuracies_naive._acc_conf))
-        cv_file.write('\nKNN      , ' + str(accuracies_KNN._acc) + "," + str(accuracies_KNN._acc_no_conf) + "," +str(accuracies_KNN._acc_conf))
-        cv_file.write('\nSVM      , ' + str(accuracies_svm._acc) + "," + str(accuracies_svm._acc_no_conf) + "," +str(accuracies_svm._acc_conf))
-        cv_file.write('\nKern SVM , ' + str(accuracies_kernel_svm._acc) + "," + str(accuracies_kernel_svm._acc_no_conf) + "," +str(accuracies_kernel_svm._acc_conf))
-        cv_file.write('\nD Trees  , ' + str(accuracies_decision_tree._acc) + "," + str(accuracies_decision_tree._acc_no_conf) + "," +str(accuracies_decision_tree._acc_conf))
-        cv_file.write('\nRand For , ' + str(accuracies_random_forest._acc) + "," + str(accuracies_random_forest._acc_no_conf) + "," +str(accuracies_random_forest._acc_conf))
-    
-    write_data_to_file(accuracies_linear, folder_name + 'Linear.csv')
-    write_data_to_file(accuracies_naive, folder_name + 'Naive.csv')
-    write_data_to_file(accuracies_KNN, folder_name + 'KNN.csv')
-    write_data_to_file(accuracies_svm, folder_name + 'SVM.csv')
-    write_data_to_file(accuracies_kernel_svm, folder_name + 'KernelSVM.csv')
-    write_data_to_file(accuracies_decision_tree, folder_name + 'DT.csv')
-    write_data_to_file(accuracies_random_forest, folder_name + 'Rand Forest.csv')
-
+#        index_of_y_to_classify = 2
+        folder_name = '3-scenario/fold_{}/'.format(counter)
+            
+        # Begin Classification
+        y_current_train = y_train
+        y_current_test =  y_test
+        
+        # 1- linear regression
+        linear_classifier = LogisticRegression(random_state = random_state)
+        linear_classifier.fit(X_train, y_current_train)
+        accuracies_linear = calculate_accuracy(linear_classifier, X_test, y_current_test)
+        
+        # 2- KNN
+        knn_classifier = KNeighborsClassifier()
+        knn_classifier.fit(X_train, y_current_train)
+        accuracies_KNN = calculate_accuracy(knn_classifier, X_test, y_current_test)
+        
+        # 3- SVM
+        svm_classifier = SVC(kernel = 'linear', random_state = random_state, probability=True)
+        svm_classifier.fit(X_train, y_current_train)
+        accuracies_svm = calculate_accuracy(svm_classifier, X_test, y_current_test)
+        
+        #4- Kernel SVM
+        kernel_svm_classifier = SVC(kernel = 'rbf', random_state = random_state, probability=True)
+        kernel_svm_classifier.fit(X_train, y_current_train)
+        accuracies_kernel_svm = calculate_accuracy(kernel_svm_classifier, X_test, y_current_test)
+        
+        #5- Naive Bayes
+        naive_classifier = GaussianNB()
+        naive_classifier.fit(X_train, y_current_train)
+        accuracies_naive = calculate_accuracy(naive_classifier, X_test, y_current_test)
+        
+        #6- Decision Tree
+        decision_tree_classifier = DecisionTreeClassifier(criterion = 'entropy', random_state = random_state)
+        decision_tree_classifier.fit(X_train, y_current_train)
+        accuracies_decision_tree = calculate_accuracy(decision_tree_classifier, X_test, y_current_test)
+        
+        #7- Random Forest
+        random_forest_classifier = RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = random_state)
+        random_forest_classifier.fit(X_train, y_current_train)
+        accuracies_random_forest = calculate_accuracy(random_forest_classifier, X_test, y_current_test)
+        
+        if os.path.isdir(folder_name) == False:
+            os.mkdir(folder_name)
+        
+        with open(folder_name + 'Results.csv', 'a') as cv_file:
+            cv_file.write('Algorithm, One Scenario, No Confidence, Confidence')
+            cv_file.write('\nLinear   , ' + str(accuracies_linear._acc) + "," + str(accuracies_linear._acc_no_conf) + "," +str(accuracies_linear._acc_conf))
+            cv_file.write('\nNaive   , ' + str(accuracies_naive._acc) + "," + str(accuracies_naive._acc_no_conf) + "," +str(accuracies_naive._acc_conf))
+            cv_file.write('\nKNN      , ' + str(accuracies_KNN._acc) + "," + str(accuracies_KNN._acc_no_conf) + "," +str(accuracies_KNN._acc_conf))
+            cv_file.write('\nSVM      , ' + str(accuracies_svm._acc) + "," + str(accuracies_svm._acc_no_conf) + "," +str(accuracies_svm._acc_conf))
+            cv_file.write('\nKern SVM , ' + str(accuracies_kernel_svm._acc) + "," + str(accuracies_kernel_svm._acc_no_conf) + "," +str(accuracies_kernel_svm._acc_conf))
+            cv_file.write('\nD Trees  , ' + str(accuracies_decision_tree._acc) + "," + str(accuracies_decision_tree._acc_no_conf) + "," +str(accuracies_decision_tree._acc_conf))
+            cv_file.write('\nRand For , ' + str(accuracies_random_forest._acc) + "," + str(accuracies_random_forest._acc_no_conf) + "," +str(accuracies_random_forest._acc_conf))
+        
+        write_data_to_file(accuracies_linear, folder_name + 'Linear.csv')
+        write_data_to_file(accuracies_naive, folder_name + 'Naive.csv')
+        write_data_to_file(accuracies_KNN, folder_name + 'KNN.csv')
+        write_data_to_file(accuracies_svm, folder_name + 'SVM.csv')
+        write_data_to_file(accuracies_kernel_svm, folder_name + 'KernelSVM.csv')
+        write_data_to_file(accuracies_decision_tree, folder_name + 'DT.csv')
+        write_data_to_file(accuracies_random_forest, folder_name + 'Rand Forest.csv')
+        counter += 1            
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         path = sys.argv[1]
     else:
-        path = os.getcwd() + '\dataset_processed.csv'
+        path = os.getcwd() + '/dataset_processed.csv'
         
     main(path)
